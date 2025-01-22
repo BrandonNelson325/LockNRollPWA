@@ -7,6 +7,9 @@ export default function Home() {
   const router = useRouter();
 
   return (
+    <Head>
+      <link rel="manifest" href="/manifest.json" />
+    </Head>
     <main className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 flex flex-col items-center justify-center p-4">
       <div className="text-center space-y-12">
         <h1 className="text-5xl font-bold text-white mb-12">LockNRoll</h1>
