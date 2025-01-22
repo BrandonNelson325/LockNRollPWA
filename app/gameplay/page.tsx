@@ -268,18 +268,28 @@ export default function Gameplay() {
     let shouldEndRound = false;
     
     if (newRollCount <= 3) {
-      if (number === 2) newScore += 200;
-      else if (number === 7) newScore += 100;
-      else if (number === 12) newScore += 200;
-      else if (number === 'Doubles') newScore *= 2;
-      else if (typeof number === 'number') newScore += number;
-    } else {
-      if (number === 7) {
-        shouldEndRound = true;
+      if (typeof number === 'number') {
+        if (number === 2) newScore += 200;
+        else if (number === 7) newScore += 100;
+        else if (number === 12) newScore += 200;
+        else newScore += number;
+      } else if (number === 'Doubles') {
+        newScore *= 2;
       }
-      else if (number === 2 || number === 12) newScore = Math.floor(newScore * 2.5);
-      else if (number === 'Doubles') newScore *= 2;
-      else if (typeof number === 'number') newScore += number;
+    } else {
+      if (typeof number === 'number') {
+        if (number === 7) {
+          shouldEndRound = true;
+        }
+        else if (number === 2 || number === 12) {
+          newScore = Math.floor(newScore * 2.5);
+        }
+        else {
+          newScore += number;
+        }
+      } else if (number === 'Doubles') {
+        newScore *= 2;
+      }
     }
 
     setRoundScore(newScore);
