@@ -20,6 +20,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
 type Player = {
   name: string;
@@ -162,6 +163,57 @@ function SortablePlayerItem({
           </>
         )}
       </div>
+    </div>
+  );
+}
+
+function RulesContent() {
+  return (
+    <div className="space-y-6 pr-6">
+      <section>
+        <h2 className="text-2xl font-bold mb-4 text-blue-400">Basic Rules</h2>
+        <ul className="list-disc list-inside space-y-2 text-gray-200">
+          <li>Players take turns rolling dice and accumulating points for the round</li>
+          <li>Players can lock in their score at any time to secure their points</li>
+          <li>Once locked, a player cannot roll again until the next round</li>
+          <li>Points are only added to an individuals total score if they lock their score before a round ends</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 className="text-2xl font-bold mb-4 text-blue-400">Scoring</h2>
+        <h3 className="text-xl font-semibold mb-2 text-green-400">First Three Rolls</h3>
+        <ul className="list-disc list-inside space-y-2 text-gray-200">
+          <li>Rolling a 2: +200 points</li>
+          <li>Rolling a 7: +100 points</li>
+          <li>Rolling a 12: +200 points</li>
+          <li>All other numbers: Add face value to score</li>
+          <li>Rolling doubles: Multiply current score by 2</li>
+        </ul>
+
+        <h3 className="text-xl font-semibold mt-4 mb-2 text-green-400">After Three Rolls</h3>
+        <ul className="list-disc list-inside space-y-2 text-gray-200">
+          <li>Rolling a 2 or 12: Multiply current score by 2.5</li>
+          <li>Rolling a 7: End round (only locked scores are kept)</li>
+          <li>All other numbers: Add face value to score</li>
+          <li>Rolling doubles: Multiply current score by 2</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 className="text-2xl font-bold mb-4 text-blue-400">Round End Conditions</h2>
+        <ul className="list-disc list-inside space-y-2 text-gray-200">
+          <li>All players lock their scores</li>
+          <li>A player rolls a 7 after their third roll</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 className="text-2xl font-bold mb-4 text-blue-400">Winning</h2>
+        <p className="text-gray-200">
+          After all rounds are completed, the player with the highest total score wins the game!
+        </p>
+      </section>
     </div>
   );
 }
@@ -483,12 +535,21 @@ export default function Gameplay() {
               <Home className="w-6 h-6" />
             </button>
             <h1 className="text-3xl font-bold text-white">Round {currentRound}/{totalRounds}</h1>
-            <button
-              onClick={() => router.push(`/rules?from=gameplay&players=${searchParams.get('players')}&rounds=${searchParams.get('rounds')}`)}
-              className="text-white hover:text-blue-400 transition-colors"
-            >
-              <ScrollText className="w-6 h-6" />
-            </button>
+            <Sheet>
+              <SheetTrigger asChild>
+                <button className="text-white hover:text-blue-400 transition-colors">
+                  <ScrollText className="w-6 h-6" />
+                </button>
+              </SheetTrigger>
+              <SheetContent className="w-[90%] sm:w-[540px] bg-gray-900 border-gray-800">
+                <SheetHeader>
+                  <SheetTitle className="text-3xl font-bold text-white">Game Rules</SheetTitle>
+                </SheetHeader>
+                <div className="mt-6 overflow-y-auto max-h-[calc(100vh-100px)]">
+                  <RulesContent />
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
           {leaderInfo && leaderInfo.score > 0 && (
             <div className="flex items-center gap-2 text-yellow-400">
@@ -522,7 +583,9 @@ export default function Gameplay() {
                     (number === 'Doubles' && rollCount < 3) || 
                     players[currentPlayerIndex].isLocked
                   }
-                  className={`p-8 bg-gradient-to-r rounded-lg shadow-lg transition-all duration-300 transform hover:scale-105 text-white font-bold text-2xl ${getButtonStyle(number)}`}
+                  className={`p-4 bg-gradient-to-r rounded-lg shadow-lg transition-all duration-300 transform hover:scale-105 text-white font-bold flex items-center justify-center ${
+                    typeof number === 'string' ? 'text-lg' : 'text-2xl'
+                  } ${getButtonStyle(number)}`}
                 >
                   {number}
                 </button>
