@@ -12,27 +12,79 @@ export function PWAInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showPrompt, setShowPrompt] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    // Check if already installed
-    if (window.matchMedia('(display-mode: standalone)').matches) {
-      return;
-    }
+    // Check if mobile
+    const checkMobile = () => {
+      return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    };
 
     // Check if iOS
-    const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
-    setIsIOS(isIOSDevice);
+    const checkIOS = () => {
+      return /iPad|iPhone|iPod/.test(navigator.userAgent) && 
+             !(window as any).MSStream;
+    };
+
+    // Check if already installed
+    const checkStandalone = () => {
+      return window.matchMedia('(display-mode: standalone)').matches || 
+             (window.navigator as any).standalone || 
+             document.referrer.includes('android-app://');
+    };
+
+    const initialize = () => {
+      const mobile = checkMobile();
+      const ios = checkIOS();
+      const standalone = checkStandalone();
+
+      setIsMobile(mobile);
+      setIsIOS(ios);
+      setIsStandalone(standalone);
+
+      // Show prompt for iOS mobile users if not installed
+      if (ios && mobile && !standalone) {
+        setShowPrompt(true);
+      }
+    };
+
+    initialize();
 
     const handler = (e: Event) => {
       e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
-      setShowPrompt(true);
+      const promptEvent = e as BeforeInstallPromptEvent;
+      setDeferredPrompt(promptEvent);
+      // Show prompt for non-iOS mobile users
+      if (!isIOS && isMobile && !isStandalone) {
+        setShowPrompt(true);
+      }
     };
 
     window.addEventListener('beforeinstallprompt', handler);
 
-    return () => window.removeEventListener('beforeinstallprompt', handler);
-  }, []);
+    // Listen for display mode changes
+    const mediaQuery = window.matchMedia('(display-mode: standalone)');
+    const handleDisplayModeChange = (e: MediaQueryListEvent) => {
+      if (e.matches) {
+        setShowPrompt(false);
+        setIsStandalone(true);
+      }
+    };
+    mediaQuery.addEventListener('change', handleDisplayModeChange);
+
+    // Check visibility changes
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        initialize();
+      }
+    });
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handler);
+      mediaQuery.removeEventListener('change', handleDisplayModeChange);
+    };
+  }, [isIOS, isMobile, isStandalone]);
 
   const handleInstall = async () => {
     if (!deferredPrompt) return;
@@ -46,7 +98,11 @@ export function PWAInstallPrompt() {
     setDeferredPrompt(null);
   };
 
-  if (!showPrompt) return null;
+  // Don't show if already installed
+  if (!showPrompt || isStandalone) return null;
+
+  // Don't show on desktop unless there's an install prompt
+  if (!isMobile && !deferredPrompt) return null;
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -94,19 +150,19 @@ export function PWAInstallPrompt() {
               <div className="flex items-start gap-3 text-gray-300">
                 <div className="mt-1">1.</div>
                 <div>
-                  Click the install button below
+                  {isMobile ? 'Tap' : 'Click'} the install button below
                 </div>
               </div>
               <div className="flex items-start gap-3 text-gray-300">
                 <div className="mt-1">2.</div>
                 <div>
-                  When prompted, click "Install" to add LockNRoll to your device
+                  When prompted, {isMobile ? 'tap' : 'click'} "Install" to add LockNRoll to your device
                 </div>
               </div>
             </div>
           )}
 
-          {!isIOS && (
+          {!isIOS && deferredPrompt && (
             <button
               onClick={handleInstall}
               className="w-full p-4 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg shadow-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-300 flex items-center justify-center gap-3 text-white font-semibold text-lg"

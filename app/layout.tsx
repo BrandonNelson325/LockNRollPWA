@@ -11,6 +11,18 @@ export const metadata: Metadata = {
   manifest: '/manifest.json',
   themeColor: '#1f2937',
   viewport: 'width=device-width, initial-scale=1, maximum-scale=1',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'LockNRoll',
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  icons: {
+    icon: '/icon-512.png',
+    apple: '/icon-512.png',
+  },
 };
 
 export default function RootLayout({
