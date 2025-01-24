@@ -2,7 +2,6 @@ import './globals.css';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { PWAInstallPrompt } from '@/components/ui/pwa-install-prompt';
-import { BannerAd } from '@/components/ui/ads/banner-ad';
 import Script from 'next/script';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -41,18 +40,13 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-title" content="LockNRoll" />
         <Script
           async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4471669474742212"
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=YOUR_ADSENSE_CLIENT_ID" // Replace with your AdSense client ID
           crossOrigin="anonymous"
           strategy="afterInteractive"
         />
       </head>
       <body className={inter.className} suppressHydrationWarning>
-        <div className="flex flex-col min-h-screen">
-          <div className="flex-1">
-            {children}
-          </div>
-          <BannerAd />
-        </div>
+        {children}
         <PWAInstallPrompt />
       </body>
     </html>

@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Home, Lock, Unlock, ScrollText, GripVertical, Pencil, Check, X, Crown, Trophy, RotateCw } from 'lucide-react';
-import { InterstitialAd } from '@/components/ui/ads/interstitial-ad';
 import {
   DndContext,
   closestCenter,
@@ -21,6 +20,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
 type Player = {
   name: string;
@@ -167,6 +167,57 @@ function SortablePlayerItem({
   );
 }
 
+function RulesContent() {
+  return (
+    <div className="space-y-6 pr-6">
+      <section>
+        <h2 className="text-2xl font-bold mb-4 text-blue-400">Basic Rules</h2>
+        <ul className="list-disc list-inside space-y-2 text-gray-200">
+          <li>Players take turns rolling dice and accumulating points for the round</li>
+          <li>Players can lock in their score at any time to secure their points</li>
+          <li>Once locked, a player cannot roll again until the next round</li>
+          <li>Points are only added to an individuals total score if they lock their score before a round ends</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 className="text-2xl font-bold mb-4 text-blue-400">Scoring</h2>
+        <h3 className="text-xl font-semibold mb-2 text-green-400">First Three Rolls</h3>
+        <ul className="list-disc list-inside space-y-2 text-gray-200">
+          <li>Rolling a 2: +200 points</li>
+          <li>Rolling a 7: +100 points</li>
+          <li>Rolling a 12: +200 points</li>
+          <li>All other numbers: Add face value to score</li>
+          <li>Rolling doubles: Multiply current score by 2</li>
+        </ul>
+
+        <h3 className="text-xl font-semibold mt-4 mb-2 text-green-400">After Three Rolls</h3>
+        <ul className="list-disc list-inside space-y-2 text-gray-200">
+          <li>Rolling a 2 or 12: Multiply current score by 2.5</li>
+          <li>Rolling a 7: End round (only locked scores are kept)</li>
+          <li>All other numbers: Add face value to score</li>
+          <li>Rolling doubles: Multiply current score by 2</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 className="text-2xl font-bold mb-4 text-blue-400">Round End Conditions</h2>
+        <ul className="list-disc list-inside space-y-2 text-gray-200">
+          <li>All players lock their scores</li>
+          <li>A player rolls a 7 after their third roll</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 className="text-2xl font-bold mb-4 text-blue-400">Winning</h2>
+        <p className="text-gray-200">
+          After all rounds are completed, the player with the highest total score wins the game!
+        </p>
+      </section>
+    </div>
+  );
+}
+
 export default function Gameplay() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -179,7 +230,7 @@ export default function Gameplay() {
   const [roundScore, setRoundScore] = useState(0);
   const [gameOver, setGameOver] = useState(false);
   const [winners, setWinners] = useState<Player[]>([]);
-  const [showAd, setShowAd] = useState(false);
+  const [showGameOverAd, setShowGameOverAd] = useState(false);
 
   useEffect(() => {
     try {
@@ -248,6 +299,7 @@ export default function Gameplay() {
       nextIndex = (nextIndex + 1) % players.length;
     }
     
+    // If we've cycled through all players and they're all locked, end the round
     if (nextIndex === currentPlayerIndex && players[nextIndex].isLocked) {
       endRound(false);
       return;
@@ -308,14 +360,17 @@ export default function Gameplay() {
       const player = newPlayers[playerIndex];
       
       if (!player.isLocked) {
+        // Add round score to any player who locks
         player.totalScore += roundScore;
         player.isLocked = true;
         
+        // If this was the current player, move to next
         if (playerIndex === currentPlayerIndex) {
           setTimeout(() => moveToNextPlayer(), 0);
         }
       }
       
+      // Check if all players are locked
       if (newPlayers.every(p => p.isLocked)) {
         setTimeout(() => endRound(false), 0);
       }
@@ -329,14 +384,14 @@ export default function Gameplay() {
     const winners = players.filter(p => p.totalScore === maxScore);
     setWinners(winners);
     setGameOver(true);
-    setShowAd(true);
+    setShowGameOverAd(true);
   };
 
   const endRound = (rolledSeven: boolean) => {
     setPlayers(prev => prev.map(player => ({
       ...player,
       isLocked: false,
-      totalScore: player.totalScore
+      totalScore: player.totalScore // Keep existing scores
     })));
     
     setRollCount(0);
@@ -351,6 +406,7 @@ export default function Gameplay() {
   };
 
   const handlePlayAgain = () => {
+    // Pass the current players to the new game screen
     const playersParam = encodeURIComponent(JSON.stringify(players.map(p => p.name)));
     router.push(`/new-game?previous=${playersParam}`);
   };
@@ -418,55 +474,62 @@ export default function Gameplay() {
 
   if (gameOver) {
     return (
-      <main className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 flex flex-col items-center justify-center p-4">
-        {showAd && <InterstitialAd onClose={() => setShowAd(false)} />}
-        <div className="w-full max-w-md space-y-8 text-center">
-          <div className="flex flex-col items-center gap-4">
-            <Trophy className="w-24 h-24 text-yellow-400" />
-            <h1 className="text-4xl font-bold text-white">Game Over!</h1>
-            {winners.length === 1 ? (
-              <div className="space-y-2">
-                <h2 className="text-2xl font-bold text-yellow-400">
-                  {winners[0].name} Wins!
-                </h2>
-                <p className="text-xl text-gray-300">
-                  Final Score: {winners[0].totalScore}
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <h2 className="text-2xl font-bold text-yellow-400">
-                  It's a Tie!
-                </h2>
+      <>
+        {showGameOverAd && (
+          <FullScreenAd
+            onClose={() => setShowGameOverAd(false)}
+            adSlot="1819468844"
+          />
+        )}
+        <main className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 flex flex-col items-center justify-center p-4">
+          <div className="w-full max-w-md space-y-8 text-center">
+            <div className="flex flex-col items-center gap-4">
+              <Trophy className="w-24 h-24 text-yellow-400" />
+              <h1 className="text-4xl font-bold text-white">Game Over!</h1>
+              {winners.length === 1 ? (
                 <div className="space-y-2">
-                  {winners.map((winner, index) => (
-                    <p key={index} className="text-xl text-gray-300">
-                      {winner.name}: {winner.totalScore}
-                    </p>
-                  ))}
+                  <h2 className="text-2xl font-bold text-yellow-400">
+                    {winners[0].name} Wins!
+                  </h2>
+                  <p className="text-xl text-gray-300">
+                    Final Score: {winners[0].totalScore}
+                  </p>
                 </div>
-              </div>
-            )}
-          </div>
+              ) : (
+                <div className="space-y-4">
+                  <h2 className="text-2xl font-bold text-yellow-400">
+                    It's a Tie!
+                  </h2>
+                  <div className="space-y-2">
+                    {winners.map((winner, index) => (
+                      <p key={index} className="text-xl text-gray-300">
+                        {winner.name}: {winner.totalScore}
+                      </p>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
 
-          <div className="flex flex-col gap-4 mt-8">
-            <button
-              onClick={handlePlayAgain}
-              className="w-full p-4 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg shadow-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-300 flex items-center justify-center gap-3 text-white font-semibold text-lg"
-            >
-              <RotateCw className="w-6 h-6" />
-              <span>Play Again</span>
-            </button>
-            <button
-              onClick={() => router.push('/')}
-              className="w-full p-4 bg-gradient-to-r from-gray-700 to-gray-800 rounded-lg shadow-lg hover:from-gray-600 hover:to-gray-700 transition-all duration-300 flex items-center justify-center gap-3 text-white font-semibold text-lg"
-            >
-              <Home className="w-6 h-6" />
-              <span>Back to Home</span>
-            </button>
+            <div className="flex flex-col gap-4 mt-8">
+              <button
+                onClick={handlePlayAgain}
+                className="w-full p-4 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg shadow-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-300 flex items-center justify-center gap-3 text-white font-semibold text-lg"
+              >
+                <RotateCw className="w-6 h-6" />
+                <span>Play Again</span>
+              </button>
+              <button
+                onClick={() => router.push('/')}
+                className="w-full p-4 bg-gradient-to-r from-gray-700 to-gray-800 rounded-lg shadow-lg hover:from-gray-600 hover:to-gray-700 transition-all duration-300 flex items-center justify-center gap-3 text-white font-semibold text-lg"
+              >
+                <Home className="w-6 h-6" />
+                <span>Back to Home</span>
+              </button>
+            </div>
           </div>
-        </div>
-      </main>
+        </main>
+      </>
     );
   }
 
@@ -482,12 +545,21 @@ export default function Gameplay() {
               <Home className="w-6 h-6" />
             </button>
             <h1 className="text-3xl font-bold text-white">Round {currentRound}/{totalRounds}</h1>
-            <button
-              onClick={() => router.push(`/rules?from=gameplay&players=${searchParams.get('players')}&rounds=${searchParams.get('rounds')}`)}
-              className="text-white hover:text-blue-400 transition-colors"
-            >
-              <ScrollText className="w-6 h-6" />
-            </button>
+            <Sheet>
+              <SheetTrigger asChild>
+                <button className="text-white hover:text-blue-400 transition-colors">
+                  <ScrollText className="w-6 h-6" />
+                </button>
+              </SheetTrigger>
+              <SheetContent className="w-[90%] sm:w-[540px] bg-gray-900 border-gray-800">
+                <SheetHeader>
+                  <SheetTitle className="text-3xl font-bold text-white">Game Rules</SheetTitle>
+                </SheetHeader>
+                <div className="mt-6 overflow-y-auto max-h-[calc(100vh-100px)]">
+                  <RulesContent />
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
           {leaderInfo && leaderInfo.score > 0 && (
             <div className="flex items-center gap-2 text-yellow-400">
@@ -521,7 +593,9 @@ export default function Gameplay() {
                     (number === 'Doubles' && rollCount < 3) || 
                     players[currentPlayerIndex].isLocked
                   }
-                  className={`p-8 bg-gradient-to-r rounded-lg shadow-lg transition-all duration-300 transform hover:scale-105 text-white font-bold text-2xl ${getButtonStyle(number)}`}
+                  className={`p-4 bg-gradient-to-r rounded-lg shadow-lg transition-all duration-300 transform hover:scale-105 text-white font-bold flex items-center justify-center ${
+                    typeof number === 'string' ? 'text-lg' : 'text-2xl'
+                  } ${getButtonStyle(number)}`}
                 >
                   {number}
                 </button>
