@@ -71,7 +71,7 @@ export function BannerAd() {
         className="adsbygoogle"
         style={{ display: 'block', minHeight: '100px', width: '100%', maxWidth: '728px' }}
         data-ad-client="ca-pub-4471669474742212"
-        data-ad-slot="7161732583"
+        data-ad-slot="4895960841"
         data-ad-format="auto"
         data-full-width-responsive="true"
       />
