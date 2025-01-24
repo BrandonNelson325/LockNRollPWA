@@ -473,6 +473,7 @@ export default function Gameplay() {
   if (gameOver) {
     return (
       <main className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 flex flex-col items-center justify-center p-4">
+        <InterstitialAd onClose={() => {}} />
         <div className="w-full max-w-md space-y-8 text-center">
           <div className="flex flex-col items-center gap-4">
             <Trophy className="w-24 h-24 text-yellow-400" />
