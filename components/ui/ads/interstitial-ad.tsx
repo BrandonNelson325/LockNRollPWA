@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface InterstitialAdProps {
   onClose?: () => void;
@@ -8,35 +8,76 @@ interface InterstitialAdProps {
 
 export function InterstitialAd({ onClose }: InterstitialAdProps) {
   const adRef = useRef<HTMLDivElement>(null);
+  const [adFailed, setAdFailed] = useState(false);
+  const [scriptLoaded, setScriptLoaded] = useState(false);
 
   useEffect(() => {
+    // Check if the script is loaded
+    const checkScript = () => {
+      if ((window as any).adsbygoogle) {
+        setScriptLoaded(true);
+      }
+    };
+
+    // Check immediately
+    checkScript();
+
+    // Also set up an interval to check for delayed loading
+    const interval = setInterval(checkScript, 100);
+    const timeout = setTimeout(() => {
+      clearInterval(interval);
+      if (!scriptLoaded) {
+        setAdFailed(true);
+        onClose?.();
+      }
+    }, 5000);
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
+  }, [scriptLoaded, onClose]);
+
+  useEffect(() => {
+    if (!scriptLoaded) return;
+
     try {
-      const adsbygoogle = (window as any).adsbygoogle || [];
-      
+      const adsbygoogle = (window as any).adsbygoogle;
       if (adRef.current) {
         adsbygoogle.push({});
       }
+
+      const timeout = setTimeout(() => {
+        if (adRef.current && !adRef.current.firstChild) {
+          setAdFailed(true);
+          onClose?.();
+        }
+      }, 2000);
+
+      return () => {
+        clearTimeout(timeout);
+        if (adRef.current) {
+          adRef.current.innerHTML = '';
+        }
+      };
     } catch (error) {
       console.error('Error loading interstitial ad:', error);
-      // If ad fails to load, call onClose to continue the game flow
+      setAdFailed(true);
       onClose?.();
     }
+  }, [scriptLoaded, onClose]);
 
-    return () => {
-      // Cleanup: Remove the ad when component unmounts
-      if (adRef.current) {
-        adRef.current.innerHTML = '';
-      }
-    };
-  }, [onClose]);
+  if (adFailed) {
+    return null;
+  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white p-4 rounded-lg max-w-md w-full">
+      <div className="bg-white p-4 rounded-lg max-w-md w-full min-h-[250px]">
         <ins
           ref={adRef}
           className="adsbygoogle"
-          style={{ display: 'block' }}
+          style={{ display: 'block', minHeight: '250px', width: '100%' }}
           data-ad-client="ca-pub-4471669474742212"
           data-ad-slot="2307998982"
           data-ad-format="auto"
