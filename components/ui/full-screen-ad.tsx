@@ -43,7 +43,7 @@ export function FullScreenAd({ onClose, adSlot }: FullScreenAdProps) {
         <ins
           className="adsbygoogle"
           style={{ display: 'block', width: '100%', height: '100%' }}
-          data-ad-client="ca-pub-4471669474742212" // Replace with your AdSense client ID
+          data-ad-client="ca-pub-4471669474742212"
           data-ad-slot={adSlot}
           data-ad-format="auto"
           data-full-width-responsive="true"
