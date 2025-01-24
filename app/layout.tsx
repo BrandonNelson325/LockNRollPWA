@@ -40,7 +40,7 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-title" content="LockNRoll" />
         <Script
           async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=YOUR_ADSENSE_CLIENT_ID" // Replace with your AdSense client ID
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4471669474742212" // Replace with your AdSense client ID
           crossOrigin="anonymous"
           strategy="afterInteractive"
         />
