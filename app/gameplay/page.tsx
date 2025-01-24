@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { Lock, Unlock, RotateCcw, Home, ScrollText, GripVertical, Pencil, Check, X, Crown, Trophy, RotateCw } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Home, Lock, Unlock, ScrollText, GripVertical, Pencil, Check, X, Crown, Trophy, RotateCw } from 'lucide-react';
+import { FullScreenAd } from '@/components/ui/full-screen-ad';
 import {
   DndContext,
   closestCenter,
