@@ -31,22 +31,33 @@ type Player = {
 // GameOverAd component
 function GameOverAd({ onClose }: { onClose: () => void }) {
   useEffect(() => {
+    // Initialize adsbygoogle if it doesn't exist
+    (window as any).adsbygoogle = (window as any).adsbygoogle || [];
+
     // Create script element
     const script = document.createElement('script');
     script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4471669474742212';
     script.async = true;
     script.crossOrigin = 'anonymous';
     
-    // Add load event listener
-    script.addEventListener('load', () => {
+    const loadAd = () => {
       try {
-        // Push the ad after the script has loaded
-        ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
+        // Clear any existing ads in this slot
+        const adElement = document.querySelector('.adsbygoogle');
+        if (adElement) {
+          adElement.innerHTML = '';
+        }
+
+        // Push the ad
+        (window as any).adsbygoogle.push({});
       } catch (err) {
         console.error('AdSense error:', err);
         onClose();
       }
-    });
+    };
+
+    // Add load event listener
+    script.addEventListener('load', loadAd);
 
     // Add error event listener
     script.addEventListener('error', () => {
@@ -54,21 +65,33 @@ function GameOverAd({ onClose }: { onClose: () => void }) {
       onClose();
     });
 
-    // Append script to document
-    document.head.appendChild(script);
+    // Check if script is already loaded
+    if (document.querySelector('script[src*="adsbygoogle.js"]')) {
+      loadAd();
+    } else {
+      // Append script to document
+      document.head.appendChild(script);
+    }
 
     // Cleanup
     return () => {
-      document.head.removeChild(script);
+      if (script.parentNode) {
+        script.parentNode.removeChild(script);
+      }
     };
   }, [onClose]);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center">
-      <div className="relative w-full max-w-lg mx-4">
+      <div className="relative w-full max-w-lg mx-4 min-h-[250px] bg-gray-800 rounded-lg">
         <ins
           className="adsbygoogle"
-          style={{ display: 'block', minHeight: '250px' }}
+          style={{ 
+            display: 'block',
+            width: '100%',
+            height: '250px',
+            backgroundColor: 'transparent'
+          }}
           data-ad-client="ca-pub-4471669474742212"
           data-ad-slot="1819468844"
           data-ad-format="auto"
