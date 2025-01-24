@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { Lock, Unlock, RotateCcw, Home, ScrollText, GripVertical, Pencil, Check, X, Crown, Trophy, RotateCw } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import Script from 'next/script';
 import {
   DndContext,
   closestCenter,
@@ -29,41 +28,47 @@ type Player = {
   isLocked: boolean;
 };
 
-interface SortablePlayerItemProps {
-  id: string;
-  player: Player;
-  isCurrentPlayer: boolean;
-  onLockToggle: () => void;
-  onNameChange: (newName: string) => void;
-  roundScore: number;
-}
-
-// Add AdSense component
+// GameOverAd component
 function GameOverAd({ onClose }: { onClose: () => void }) {
   useEffect(() => {
-    // Try to load ad when component mounts
-    try {
-      const adsbygoogle = (window as any).adsbygoogle;
-      adsbygoogle?.push({});
-    } catch (err) {
-      console.error('AdSense error:', err);
-      onClose(); // Close if there's an error
-    }
+    // Create script element
+    const script = document.createElement('script');
+    script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4471669474742212';
+    script.async = true;
+    script.crossOrigin = 'anonymous';
+    
+    // Add load event listener
+    script.addEventListener('load', () => {
+      try {
+        // Push the ad after the script has loaded
+        ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
+      } catch (err) {
+        console.error('AdSense error:', err);
+        onClose();
+      }
+    });
+
+    // Add error event listener
+    script.addEventListener('error', () => {
+      console.error('Failed to load AdSense script');
+      onClose();
+    });
+
+    // Append script to document
+    document.head.appendChild(script);
+
+    // Cleanup
+    return () => {
+      document.head.removeChild(script);
+    };
   }, [onClose]);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center">
       <div className="relative w-full max-w-lg mx-4">
-        <Script
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4471669474742212"
-          crossOrigin="anonymous"
-          strategy="lazyOnload"
-          onError={() => onClose()}
-        />
         <ins
           className="adsbygoogle"
-          style={{ display: 'block' }}
+          style={{ display: 'block', minHeight: '250px' }}
           data-ad-client="ca-pub-4471669474742212"
           data-ad-slot="1819468844"
           data-ad-format="auto"
@@ -78,6 +83,15 @@ function GameOverAd({ onClose }: { onClose: () => void }) {
       </div>
     </div>
   );
+}
+
+interface SortablePlayerItemProps {
+  id: string;
+  player: Player;
+  isCurrentPlayer: boolean;
+  onLockToggle: () => void;
+  onNameChange: (newName: string) => void;
+  roundScore: number;
 }
 
 function SortablePlayerItem({ 
