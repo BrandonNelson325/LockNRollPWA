@@ -23,7 +23,7 @@ export function AdContainer({ adSlot, adFormat = 'auto', className = '' }: AdCon
       <ins
         className="adsbygoogle"
         style={{ display: 'block' }}
-        data-ad-client="ca-pub-4471669474742212" 
+        data-ad-client="YOUR_ADSENSE_CLIENT_ID" // Replace with your AdSense client ID
         data-ad-slot={adSlot}
         data-ad-format={adFormat}
         data-full-width-responsive="true"
