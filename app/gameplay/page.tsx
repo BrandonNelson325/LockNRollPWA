@@ -179,6 +179,7 @@ export default function Gameplay() {
   const [roundScore, setRoundScore] = useState(0);
   const [gameOver, setGameOver] = useState(false);
   const [winners, setWinners] = useState<Player[]>([]);
+  const [showAd, setShowAd] = useState(false);
 
   useEffect(() => {
     try {
@@ -328,6 +329,7 @@ export default function Gameplay() {
     const winners = players.filter(p => p.totalScore === maxScore);
     setWinners(winners);
     setGameOver(true);
+    setShowAd(true);
   };
 
   const endRound = (rolledSeven: boolean) => {
@@ -417,7 +419,7 @@ export default function Gameplay() {
   if (gameOver) {
     return (
       <main className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 flex flex-col items-center justify-center p-4">
-        <InterstitialAd onClose={() => router.push('/new-game')} />
+        {showAd && <InterstitialAd onClose={() => setShowAd(false)} />}
         <div className="w-full max-w-md space-y-8 text-center">
           <div className="flex flex-col items-center gap-4">
             <Trophy className="w-24 h-24 text-yellow-400" />
