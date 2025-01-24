@@ -1,36 +1,40 @@
 "use client";
 
-import { useEffect } from 'react';
-
-declare global {
-  interface Window {
-    adsbygoogle: any[];
-  }
-}
+import { useEffect, useRef } from 'react';
 
 export function BannerAd() {
+  const adRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     try {
-      if (typeof window !== 'undefined') {
-        (window.adsbygoogle = window.adsbygoogle || []).push({});
+      const adsbygoogle = (window as any).adsbygoogle || [];
+      
+      if (adRef.current) {
+        adsbygoogle.push({});
       }
-    } catch (err) {
-      console.error('Error loading banner ad:', err);
+    } catch (error) {
+      console.error('Error loading banner ad:', error);
     }
+
+    return () => {
+      // Cleanup: Remove the ad when component unmounts
+      if (adRef.current) {
+        adRef.current.innerHTML = '';
+      }
+    };
   }, []);
 
   return (
-    <div className="w-full flex justify-center bg-gray-800 py-2">
-      <div className="w-full max-w-[728px] h-[90px]">
-        <ins
-          className="adsbygoogle"
-          style={{ display: 'inline-block', width: '100%', height: '90px' }}
-          data-ad-client="ca-pub-4471669474742212"
-          data-ad-slot="4895960841"
-          data-ad-format="auto"
-          data-full-width-responsive="true"
-        />
-      </div>
+    <div className="w-full flex justify-center p-4 bg-gray-900">
+      <ins
+        ref={adRef}
+        className="adsbygoogle"
+        style={{ display: 'block' }}
+        data-ad-client="ca-pub-4471669474742212"
+        data-ad-slot="7161732583"
+        data-ad-format="auto"
+        data-full-width-responsive="true"
+      />
     </div>
   );
 }
