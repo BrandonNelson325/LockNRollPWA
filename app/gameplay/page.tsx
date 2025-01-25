@@ -31,78 +31,82 @@ type Player = {
 // GameOverAd component
 function GameOverAd({ onClose }: { onClose: () => void }) {
   useEffect(() => {
-    // Initialize adsbygoogle if it doesn't exist
-    (window as any).adsbygoogle = (window as any).adsbygoogle || [];
+    let timeoutId: NodeJS.Timeout;
 
-    // Create script element
-    const script = document.createElement('script');
-    script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4471669474742212';
-    script.async = true;
-    script.crossOrigin = 'anonymous';
-    
     const loadAd = () => {
       try {
-        // Clear any existing ads in this slot
-        const adElement = document.querySelector('.adsbygoogle');
-        if (adElement) {
-          adElement.innerHTML = '';
-        }
-
+        // Initialize adsbygoogle
+        (window as any).adsbygoogle = (window as any).adsbygoogle || [];
+        
         // Push the ad
         (window as any).adsbygoogle.push({});
+        
+        // Set a timeout to close the ad if it doesn't load properly
+        timeoutId = setTimeout(() => {
+          console.log('Ad load timeout - closing');
+          onClose();
+        }, 5000);
       } catch (err) {
         console.error('AdSense error:', err);
         onClose();
       }
     };
 
-    // Add load event listener
+    // Load the AdSense script
+    const script = document.createElement('script');
+    script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js';
+    script.async = true;
+    script.setAttribute('data-ad-client', 'ca-pub-4471669474742212');
+    
     script.addEventListener('load', loadAd);
-
-    // Add error event listener
     script.addEventListener('error', () => {
       console.error('Failed to load AdSense script');
       onClose();
     });
 
-    // Check if script is already loaded
-    if (document.querySelector('script[src*="adsbygoogle.js"]')) {
-      loadAd();
-    } else {
-      // Append script to document
+    // Add the script if it's not already present
+    if (!document.querySelector('script[src*="adsbygoogle.js"]')) {
       document.head.appendChild(script);
+    } else {
+      loadAd();
     }
 
     // Cleanup
     return () => {
-      if (script.parentNode) {
-        script.parentNode.removeChild(script);
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      const existingScript = document.querySelector('script[src*="adsbygoogle.js"]');
+      if (existingScript && existingScript.parentNode) {
+        existingScript.parentNode.removeChild(existingScript);
       }
     };
   }, [onClose]);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center">
-      <div className="relative w-full max-w-lg mx-4 min-h-[250px] bg-gray-800 rounded-lg">
-        <ins
-          className="adsbygoogle"
-          style={{ 
-            display: 'block',
-            width: '100%',
-            height: '250px',
-            backgroundColor: 'transparent'
-          }}
-          data-ad-client="ca-pub-4471669474742212"
-          data-ad-slot="1819468844"
-          data-ad-format="auto"
-          data-full-width-responsive="true"
-        />
-        <button
-          onClick={onClose}
-          className="absolute top-2 right-2 text-white hover:text-gray-300 transition-colors"
-        >
-          <X className="w-6 h-6" />
-        </button>
+      <div className="relative w-full max-w-lg mx-4">
+        <div className="bg-gray-800 rounded-lg p-4">
+          <ins
+            className="adsbygoogle"
+            style={{
+              display: 'block',
+              width: '100%',
+              minHeight: '250px',
+              backgroundColor: '#1f2937'
+            }}
+            data-ad-client="ca-pub-4471669474742212"
+            data-ad-slot="1819468844"
+            data-ad-format="auto"
+            data-full-width-responsive="true"
+          />
+          <button
+            onClick={onClose}
+            className="absolute top-2 right-2 text-white hover:text-gray-300 transition-colors"
+          >
+            <X className="w-6 h-6" />
+          </button>
+        </div>
       </div>
     </div>
   );
