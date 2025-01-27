@@ -8,5 +8,5 @@ export const ADMOB_CONFIG = {
   testBannerAdUnitId: 'ca-app-pub-3940256099942544/6300978111',
   testInterstitialAdUnitId: 'ca-app-pub-3940256099942544/1033173712',
   testRewardedAdUnitId: 'ca-app-pub-3940256099942544/5224354917',
-  isTestMode: true // Set to false for production
+  isTestMode: false // Set to false for production
 };
