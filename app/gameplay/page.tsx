@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Lock, Unlock, RotateCcw, Home, ScrollText, GripVertical, Pencil, Check, X, Crown, Trophy, RotateCw } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useInterstitialAd } from '@/components/ui/admob/interstitial-ad';
 import {
   DndContext,
   closestCenter,
@@ -27,90 +28,6 @@ type Player = {
   totalScore: number;
   isLocked: boolean;
 };
-
-// GameOverAd component
-function GameOverAd({ onClose }: { onClose: () => void }) {
-  useEffect(() => {
-    let timeoutId: NodeJS.Timeout;
-
-    const loadAd = () => {
-      try {
-        // Initialize adsbygoogle
-        (window as any).adsbygoogle = (window as any).adsbygoogle || [];
-        
-        // Push the ad
-        (window as any).adsbygoogle.push({});
-        
-        // Set a timeout to close the ad if it doesn't load properly
-        timeoutId = setTimeout(() => {
-          console.log('Ad load timeout - closing');
-          onClose();
-        }, 5000);
-      } catch (err) {
-        console.error('AdSense error:', err);
-        onClose();
-      }
-    };
-
-    // Load the AdSense script
-    const script = document.createElement('script');
-    script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js';
-    script.async = true;
-    script.setAttribute('data-ad-client', 'ca-pub-4471669474742212');
-    
-    script.addEventListener('load', loadAd);
-    script.addEventListener('error', () => {
-      console.error('Failed to load AdSense script');
-      onClose();
-    });
-
-    // Add the script if it's not already present
-    if (!document.querySelector('script[src*="adsbygoogle.js"]')) {
-      document.head.appendChild(script);
-    } else {
-      loadAd();
-    }
-
-    // Cleanup
-    return () => {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-      const existingScript = document.querySelector('script[src*="adsbygoogle.js"]');
-      if (existingScript && existingScript.parentNode) {
-        existingScript.parentNode.removeChild(existingScript);
-      }
-    };
-  }, [onClose]);
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center">
-      <div className="relative w-full max-w-lg mx-4">
-        <div className="bg-gray-800 rounded-lg p-4">
-          <ins
-            className="adsbygoogle"
-            style={{
-              display: 'block',
-              width: '100%',
-              minHeight: '250px',
-              backgroundColor: '#1f2937'
-            }}
-            data-ad-client="ca-pub-4471669474742212"
-            data-ad-slot="1819468844"
-            data-ad-format="auto"
-            data-full-width-responsive="true"
-          />
-          <button
-            onClick={onClose}
-            className="absolute top-2 right-2 text-white hover:text-gray-300 transition-colors"
-          >
-            <X className="w-6 h-6" />
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 interface SortablePlayerItemProps {
   id: string;
@@ -305,6 +222,7 @@ function RulesContent() {
 export default function Gameplay() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { showAd, isAdComplete } = useInterstitialAd();
   
   const [players, setPlayers] = useState<Player[]>([]);
   const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
@@ -314,7 +232,17 @@ export default function Gameplay() {
   const [roundScore, setRoundScore] = useState(0);
   const [gameOver, setGameOver] = useState(false);
   const [winners, setWinners] = useState<Player[]>([]);
-  const [showGameOverAd, setShowGameOverAd] = useState(false);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   useEffect(() => {
     try {
@@ -345,17 +273,6 @@ export default function Gameplay() {
       router.push('/');
     }
   }, [searchParams, router]);
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -463,12 +380,14 @@ export default function Gameplay() {
     });
   };
 
-  const determineWinners = () => {
+  const determineWinners = async () => {
     const maxScore = Math.max(...players.map(p => p.totalScore));
     const winners = players.filter(p => p.totalScore === maxScore);
     setWinners(winners);
     setGameOver(true);
-    setShowGameOverAd(true);
+    
+    // Show interstitial ad when game ends
+    await showAd();
   };
 
   const endRound = (rolledSeven: boolean) => {
@@ -556,61 +475,60 @@ export default function Gameplay() {
 
   const leaderInfo = getLeaderInfo();
 
-  if (gameOver) {
-    return (
-      <>
-        {showGameOverAd && (
-          <GameOverAd onClose={() => setShowGameOverAd(false)} />
-        )}
-        <main className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 flex flex-col items-center justify-center p-4">
-          <div className="w-full max-w-md space-y-8 text-center">
-            <div className="flex flex-col items-center gap-4">
-              <Trophy className="w-24 h-24 text-yellow-400" />
-              <h1 className="text-4xl font-bold text-white">Game Over!</h1>
-              {winners.length === 1 ? (
-                <div className="space-y-2">
-                  <h2 className="text-2xl font-bold text-yellow-400">
-                    {winners[0].name} Wins!
-                  </h2>
-                  <p className="text-xl text-gray-300">
-                    Final Score: {winners[0].totalScore}
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <h2 className="text-2xl font-bold text-yellow-400">
-                    It's a Tie!
-                  </h2>
-                  <div className="space-y-2">
-                    {winners.map((winner, index) => (
-                      <p key={index} className="text-xl text-gray-300">
-                        {winner.name}: {winner.totalScore}
-                      </p>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+  if (gameOver && !isAdComplete) {
+    return null; // Don't show anything while the ad is displaying
+  }
 
-            <div className="flex flex-col gap-4 mt-8">
-              <button
-                onClick={handlePlayAgain}
-                className="w-full p-4 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg shadow-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-300 flex items-center justify-center gap-3 text-white font-semibold text-lg"
-              >
-                <RotateCw className="w-6 h-6" />
-                <span>Play Again</span>
-              </button>
-              <button
-                onClick={() => router.push('/')}
-                className="w-full p-4 bg-gradient-to-r from-gray-700 to-gray-800 rounded-lg shadow-lg hover:from-gray-600 hover:to-gray-700 transition-all duration-300 flex items-center justify-center gap-3 text-white font-semibold text-lg"
-              >
-                <Home className="w-6 h-6" />
-                <span>Back to Home</span>
-              </button>
-            </div>
+  if (gameOver && isAdComplete) {
+    return (
+      <main className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 flex flex-col items-center justify-center p-4">
+        <div className="w-full max-w-md space-y-8 text-center">
+          <div className="flex flex-col items-center gap-4">
+            <Trophy className="w-24 h-24 text-yellow-400" />
+            <h1 className="text-4xl font-bold text-white">Game Over!</h1>
+            {winners.length === 1 ? (
+              <div className="space-y-2">
+                <h2 className="text-2xl font-bold text-yellow-400">
+                  {winners[0].name} Wins!
+                </h2>
+                <p className="text-xl text-gray-300">
+                  Final Score: {winners[0].totalScore}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <h2 className="text-2xl font-bold text-yellow-400">
+                  It's a Tie!
+                </h2>
+                <div className="space-y-2">
+                  {winners.map((winner, index) => (
+                    <p key={index} className="text-xl text-gray-300">
+                      {winner.name}: {winner.totalScore}
+                    </p>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
-        </main>
-      </>
+
+          <div className="flex flex-col gap-4 mt-8">
+            <button
+              onClick={handlePlayAgain}
+              className="w-full p-4 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg shadow-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-300 flex items-center justify-center gap-3 text-white font-semibold text-lg"
+            >
+              <RotateCw className="w-6 h-6" />
+              <span>Play Again</span>
+            </button>
+            <button
+              onClick={() => router.push('/')}
+              className="w-full p-4 bg-gradient-to-r from-gray-700 to-gray-800 rounded-lg shadow-lg hover:from-gray-600 hover:to-gray-700 transition-all duration-300 flex items-center justify-center gap-3 text-white font-semibold text-lg"
+            >
+              <Home className="w-6 h-6" />
+              <span>Back to Home</span>
+            </button>
+          </div>
+        </div>
+      </main>
     );
   }
 
