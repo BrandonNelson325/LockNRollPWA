@@ -2,7 +2,7 @@ import './globals.css';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { PWAInstallPrompt } from '@/components/ui/pwa-install-prompt';
-import Script from 'next/script';
+import AdSense from '@/components/adsense/adSense';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -34,16 +34,11 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <AdSense pId="ca-pub-1234567890123456"/>
         <link rel="apple-touch-icon" href="/icon-512.png" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="LockNRoll" />
-        <Script
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4471669474742212"
-          crossOrigin="anonymous"
-          strategy="afterInteractive"
-        />
       </head>
       <body className={inter.className} suppressHydrationWarning>
         {children}

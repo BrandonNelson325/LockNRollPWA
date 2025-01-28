@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Lock, Unlock, RotateCcw, Home, ScrollText, GripVertical, Pencil, Check, X, Crown, Trophy, RotateCw } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useInterstitialAd } from '@/components/ui/admob/interstitial-ad';
+import TestAd from '@/components/adsense/TestAd';
 import {
   DndContext,
   closestCenter,
@@ -222,7 +222,6 @@ function RulesContent() {
 export default function Gameplay() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { showAd, isAdComplete } = useInterstitialAd();
   
   const [players, setPlayers] = useState<Player[]>([]);
   const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
@@ -380,14 +379,11 @@ export default function Gameplay() {
     });
   };
 
-  const determineWinners = async () => {
+  const determineWinners = () => {
     const maxScore = Math.max(...players.map(p => p.totalScore));
     const winners = players.filter(p => p.totalScore === maxScore);
     setWinners(winners);
     setGameOver(true);
-    
-    // Show interstitial ad when game ends
-    await showAd();
   };
 
   const endRound = (rolledSeven: boolean) => {
@@ -475,11 +471,7 @@ export default function Gameplay() {
 
   const leaderInfo = getLeaderInfo();
 
-  if (gameOver && !isAdComplete) {
-    return null; // Don't show anything while the ad is displaying
-  }
-
-  if (gameOver && isAdComplete) {
+  if (gameOver) {
     return (
       <main className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 flex flex-col items-center justify-center p-4">
         <div className="w-full max-w-md space-y-8 text-center">
@@ -526,6 +518,9 @@ export default function Gameplay() {
               <Home className="w-6 h-6" />
               <span>Back to Home</span>
             </button>
+          </div>
+          <div className="mt-8 w-full">
+            <TestAd />
           </div>
         </div>
       </main>
@@ -629,6 +624,10 @@ export default function Gameplay() {
               </div>
             </SortableContext>
           </DndContext>
+        </div>
+
+        <div className="mt-8 w-full">
+          <TestAd />
         </div>
       </div>
     </main>
