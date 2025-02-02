@@ -231,6 +231,7 @@ export default function Gameplay() {
   const [roundScore, setRoundScore] = useState(0);
   const [gameOver, setGameOver] = useState(false);
   const [winners, setWinners] = useState<Player[]>([]);
+  const [showEndGameAd, setShowEndGameAd] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -384,6 +385,8 @@ export default function Gameplay() {
     const winners = players.filter(p => p.totalScore === maxScore);
     setWinners(winners);
     setGameOver(true);
+    // Show end game ad after a brief delay
+    setTimeout(() => setShowEndGameAd(true), 1000);
   };
 
   const endRound = (rolledSeven: boolean) => {
@@ -473,161 +476,181 @@ export default function Gameplay() {
 
   if (gameOver) {
     return (
-      <main className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 flex flex-col items-center justify-center p-4">
-        <div className="w-full max-w-md space-y-8 text-center">
-          <div className="flex flex-col items-center gap-4">
-            <Trophy className="w-24 h-24 text-yellow-400" />
-            <h1 className="text-4xl font-bold text-white">Game Over!</h1>
-            {winners.length === 1 ? (
-              <div className="space-y-2">
-                <h2 className="text-2xl font-bold text-yellow-400">
-                  {winners[0].name} Wins!
-                </h2>
-                <p className="text-xl text-gray-300">
-                  Final Score: {winners[0].totalScore}
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <h2 className="text-2xl font-bold text-yellow-400">
-                  It's a Tie!
-                </h2>
-                <div className="space-y-2">
-                  {winners.map((winner, index) => (
-                    <p key={index} className="text-xl text-gray-300">
-                      {winner.name}: {winner.totalScore}
+      <>
+        {showEndGameAd ? (
+          <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center">
+            <div className="w-full max-w-md p-4">
+              <TestAd type="square" />
+              <button
+                onClick={() => setShowEndGameAd(false)}
+                className="w-full mt-4 p-4 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg shadow-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-300 text-white font-semibold text-lg"
+              >
+                Continue
+              </button>
+            </div>
+          </div>
+        ) : null}
+        <main className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 flex flex-col items-center justify-center p-4">
+          <div className="w-full max-w-md space-y-8">
+            <div className="text-center space-y-8">
+              <div className="flex flex-col items-center gap-4">
+                <Trophy className="w-24 h-24 text-yellow-400" />
+                <h1 className="text-4xl font-bold text-white">Game Over!</h1>
+                {winners.length === 1 ? (
+                  <div className="space-y-2">
+                    <h2 className="text-2xl font-bold text-yellow-400">
+                      {winners[0].name} Wins!
+                    </h2>
+                    <p className="text-xl text-gray-300">
+                      Final Score: {winners[0].totalScore}
                     </p>
-                  ))}
-                </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <h2 className="text-2xl font-bold text-yellow-400">
+                      It's a Tie!
+                    </h2>
+                    <div className="space-y-2">
+                      {winners.map((winner, index) => (
+                        <p key={index} className="text-xl text-gray-300">
+                          {winner.name}: {winner.totalScore}
+                        </p>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
 
-          <div className="flex flex-col gap-4 mt-8">
-            <button
-              onClick={handlePlayAgain}
-              className="w-full p-4 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg shadow-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-300 flex items-center justify-center gap-3 text-white font-semibold text-lg"
-            >
-              <RotateCw className="w-6 h-6" />
-              <span>Play Again</span>
-            </button>
-            <button
-              onClick={() => router.push('/')}
-              className="w-full p-4 bg-gradient-to-r from-gray-700 to-gray-800 rounded-lg shadow-lg hover:from-gray-600 hover:to-gray-700 transition-all duration-300 flex items-center justify-center gap-3 text-white font-semibold text-lg"
-            >
-              <Home className="w-6 h-6" />
-              <span>Back to Home</span>
-            </button>
+              <div className="flex flex-col gap-4">
+                {!showEndGameAd && (
+                  <>
+                    <button
+                      onClick={handlePlayAgain}
+                      className="w-full p-4 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg shadow-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-300 flex items-center justify-center gap-3 text-white font-semibold text-lg"
+                    >
+                      <RotateCw className="w-6 h-6" />
+                      <span>Play Again</span>
+                    </button>
+                    <button
+                      onClick={() => router.push('/')}
+                      className="w-full p-4 bg-gradient-to-r from-gray-700 to-gray-800 rounded-lg shadow-lg hover:from-gray-600 hover:to-gray-700 transition-all duration-300 flex items-center justify-center gap-3 text-white font-semibold text-lg"
+                    >
+                      <Home className="w-6 h-6" />
+                      <span>Back to Home</span>
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
-          <div className="mt-8 w-full">
-            <TestAd />
-          </div>
-        </div>
-      </main>
+        </main>
+      </>
     );
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 flex flex-col items-center justify-center p-2 sm:p-4">
-      <div className="w-full max-w-md space-y-4 sm:space-y-8">
-        <div className="flex flex-col items-center gap-2">
-          <div className="flex justify-between items-center w-full mb-2">
-            <button
-              onClick={() => router.push('/')}
-              className="text-white hover:text-blue-400 transition-colors"
-            >
-              <Home className="w-6 h-6" />
-            </button>
-            <h1 className="text-3xl font-bold text-white">Round {currentRound}/{totalRounds}</h1>
-            <Sheet>
-              <SheetTrigger asChild>
-                <button className="text-white hover:text-blue-400 transition-colors">
-                  <ScrollText className="w-6 h-6" />
-                </button>
-              </SheetTrigger>
-              <SheetContent className="w-[90%] sm:w-[540px] bg-gray-900 border-gray-800">
-                <SheetHeader>
-                  <SheetTitle className="text-3xl font-bold text-white">Game Rules</SheetTitle>
-                </SheetHeader>
-                <div className="mt-6 overflow-y-auto max-h-[calc(100vh-100px)]">
-                  <RulesContent />
-                </div>
-              </SheetContent>
-            </Sheet>
-          </div>
-          {leaderInfo && leaderInfo.score > 0 && (
-            <div className="flex items-center gap-2 text-yellow-400">
-              <Crown className="w-5 h-5" />
-              <span className="font-semibold">
-                {leaderInfo.players.length === 1 
-                  ? `${leaderInfo.players[0].name}: ${leaderInfo.score}`
-                  : `Tied: ${leaderInfo.score}`
-                }
-              </span>
+    <main className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 flex flex-col items-center p-2 sm:p-4">
+      <div className="w-full max-w-md">
+        <div className="mb-4">
+          <TestAd type="banner" />
+        </div>
+        
+        <div className="space-y-4 sm:space-y-8">
+          <div className="flex flex-col items-center gap-2">
+            <div className="flex justify-between items-center w-full mb-2">
+              <button
+                onClick={() => router.push('/')}
+                className="text-white hover:text-blue-400 transition-colors"
+              >
+                <Home className="w-6 h-6" />
+              </button>
+              <h1 className="text-3xl font-bold text-white">Round {currentRound}/{totalRounds}</h1>
+              <Sheet>
+                <SheetTrigger asChild>
+                  <button className="text-white hover:text-blue-400 transition-colors">
+                    <ScrollText className="w-6 h-6" />
+                  </button>
+                </SheetTrigger>
+                <SheetContent className="w-[90%] sm:w-[540px] bg-gray-900 border-gray-800">
+                  <SheetHeader>
+                    <SheetTitle className="text-3xl font-bold text-white">Game Rules</SheetTitle>
+                  </SheetHeader>
+                  <div className="mt-6 overflow-y-auto max-h-[calc(100vh-100px)]">
+                    <RulesContent />
+                  </div>
+                </SheetContent>
+              </Sheet>
             </div>
-          )}
-        </div>
-
-        <div className="text-center mb-8">
-          <h2 className="text-2xl font-bold text-white mb-2">
-            {players[currentPlayerIndex].name}'s Turn
-          </h2>
-          <p className="text-4xl font-bold text-blue-400">{roundScore}</p>
-          <p className="text-gray-400 mt-2">Roll #{rollCount}</p>
-        </div>
-
-        <div className="grid grid-rows-4 gap-4">
-          {numberButtons.map((row, rowIndex) => (
-            <div key={rowIndex} className="grid grid-cols-3 gap-4">
-              {row.map((number, colIndex) => (
-                <button
-                  key={colIndex}
-                  onClick={() => handleRoll(number)}
-                  disabled={
-                    (number === 'Doubles' && rollCount < 3) || 
-                    players[currentPlayerIndex].isLocked
+            {leaderInfo && leaderInfo.score > 0 && (
+              <div className="flex items-center gap-2 text-yellow-400">
+                <Crown className="w-5 h-5" />
+                <span className="font-semibold">
+                  {leaderInfo.players.length === 1 
+                    ? `${leaderInfo.players[0].name}: ${leaderInfo.score}`
+                    : `Tied: ${leaderInfo.score}`
                   }
-                  className={`p-4 bg-gradient-to-r rounded-lg shadow-lg transition-all duration-300 transform hover:scale-105 text-white font-bold flex items-center justify-center ${
-                    typeof number === 'string' ? 'text-lg' : 'text-2xl'
-                  } ${getButtonStyle(number)}`}
-                >
-                  {number}
-                </button>
-              ))}
-            </div>
-          ))}
-        </div>
+                </span>
+              </div>
+            )}
+          </div>
 
-        <div className="mt-8">
-          <h3 className="text-xl text-white mb-4">Players</h3>
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext
-              items={players.map(p => p.name)}
-              strategy={verticalListSortingStrategy}
-            >
-              <div className="space-y-2">
-                {players.map((player, index) => (
-                  <SortablePlayerItem
-                    key={player.name}
-                    id={player.name}
-                    player={player}
-                    isCurrentPlayer={index === currentPlayerIndex}
-                    onLockToggle={() => toggleLock(index)}
-                    onNameChange={(newName) => handleNameChange(index, newName)}
-                    roundScore={roundScore}
-                  />
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-bold text-white mb-2">
+              {players[currentPlayerIndex].name}'s Turn
+            </h2>
+            <p className="text-4xl font-bold text-blue-400">{roundScore}</p>
+            <p className="text-gray-400 mt-2">Roll #{rollCount}</p>
+          </div>
+
+          <div className="grid grid-rows-4 gap-4">
+            {numberButtons.map((row, rowIndex) => (
+              <div key={rowIndex} className="grid grid-cols-3 gap-4">
+                {row.map((number, colIndex) => (
+                  <button
+                    key={colIndex}
+                    onClick={() => handleRoll(number)}
+                    disabled={
+                      (number === 'Doubles' && rollCount < 3) || 
+                      players[currentPlayerIndex].isLocked
+                    }
+                    className={`p-4 bg-gradient-to-r rounded-lg shadow-lg transition-all duration-300 transform hover:scale-105 text-white font-bold flex items-center justify-center ${
+                      typeof number === 'string' ? 'text-lg' : 'text-2xl'
+                    } ${getButtonStyle(number)}`}
+                  >
+                    {number}
+                  </button>
                 ))}
               </div>
-            </SortableContext>
-          </DndContext>
-        </div>
+            ))}
+          </div>
 
-        <div className="mt-8 w-full">
-          <TestAd />
+          <div className="mt-8">
+            <h3 className="text-xl text-white mb-4">Players</h3>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={players.map(p => p.name)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="space-y-2">
+                  {players.map((player, index) => (
+                    <SortablePlayerItem
+                      key={player.name}
+                      id={player.name}
+                      player={player}
+                      isCurrentPlayer={index === currentPlayerIndex}
+                      onLockToggle={() => toggleLock(index)}
+                      onNameChange={(newName) => handleNameChange(index, newName)}
+                      roundScore={roundScore}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
+          </div>
         </div>
       </div>
     </main>
